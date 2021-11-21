@@ -14,9 +14,9 @@ setuptools.setup(
     description="Utilities packages",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/spbrien/nobedtimes-utils",
+    url="https://github.com/spbrien/nbt",
     project_urls={
-        "Bug Tracker": "https://github.com/spbrien/nobedtimes-utils/issues",
+        "Bug Tracker": "https://github.com/spbrien/nbt/issues",
     },
     classifiers=[
         "Programming Language :: Python :: 3",
