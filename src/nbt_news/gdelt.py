@@ -402,7 +402,10 @@ class NewsAnalysis:
         ).hexdigest()
 
         # Storage and init
-        self.store = Storage(self.hash)
+        if store:
+            self.store = store(self.hash)
+        else:
+            self.store = Storage(self.hash)
         self.get()
 
     def get(self):
