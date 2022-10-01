@@ -453,9 +453,9 @@ class NewsAnalysis:
 
         # Storage and init
         if store:
-            self.store = store(self.hash, self.metadata)
+            self.store = store(self.hash, metadata=self.metadata)
         else:
-            self.store = Storage(self.hash, self.metadata)
+            self.store = Storage(self.hash, metadata=self.metadata)
 
     def get(self):
         self.get_volume()
