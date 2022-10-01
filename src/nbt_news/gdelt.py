@@ -155,11 +155,14 @@ class Storage:
     hash = None
     dir = None
 
-    def __init__(self, hash):
+    def __init__(self, hash, metadata={}):
         self.dir = "./.cache/%s" % hash
         exists = os.path.exists(self.dir)
         if not exists:
             os.makedirs(self.dir)
+
+        with open(os.path.join(self.dir, 'metadata.json'), 'w') as f:
+            json.dump(metadata, f)
 
     def put(self, data):
         item_fname = os.path.join(self.dir, "%s.json" % data.get('hash'))
@@ -421,6 +424,13 @@ class NewsAnalysis:
         self.stations = stations
         self.start = convert_date(start)
         self.end = convert_date(end)
+
+        self.metadata = {
+            "topic": topic,
+            "stations": stations,
+            "start": start,
+            "end": end,
+        }
         
         # Hash
         self.hash = hashlib.sha224(
@@ -443,9 +453,9 @@ class NewsAnalysis:
 
         # Storage and init
         if store:
-            self.store = store(self.hash)
+            self.store = store(self.hash, self.metadata)
         else:
-            self.store = Storage(self.hash)
+            self.store = Storage(self.hash, self.metadata)
 
     def get(self):
         self.get_volume()
