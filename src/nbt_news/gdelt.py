@@ -4,7 +4,7 @@ import json
 import time
 import logging
 import hashlib
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
 
 import requests
@@ -15,12 +15,13 @@ GDELT_URL = "https://api.gdeltproject.org/api/v2/tv/tv"
 # Logging
 # -----------------------------------------------------
 logging.basicConfig(
-    level=logging.INFO,
+    # level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
     datefmt='%m-%d %H:%M',
-    # handlers=[logging.StreamHandler(sys.stdout)]
-    filename='./news_analysis.log',
-    filemode='a'
+    handlers=[logging.StreamHandler(sys.stdout)]
+    # filename='./news_analysis.log',
+    # filemode='a'
 )
 # -----------------------------------------------------
 
@@ -47,13 +48,15 @@ def create_query(
     
     if mode == "clipgallery":
         sort = "datedesc"
-        maxrecords = 5000
+        maxrecords = 3000
     
     if start and end:
         timespan = None
 
     formatted_stations = " OR ".join(["station:%s" % station for station in stations])
-    query = "%s (%s)" % (topic, formatted_stations)
+    query = "%s (%s)" % (topic, formatted_stations) \
+        if len(stations) > 1 \
+        else "%s %s" % (topic, formatted_stations)
 
     base_params = {
         "format": format,
@@ -119,6 +122,29 @@ def get_monthly_ranges(start, end):
             )
         )
     return ranges
+
+def get_weekly_ranges(start, end):
+    start_date = datetime.strptime(start, "%Y%m%d%H%M%S")
+    end_date = datetime.strptime(end, "%Y%m%d%H%M%S")
+    ranges = []
+
+    s = start_date
+    e = datetime.strptime("01/01/1970", "%m/%d/%Y")
+    while e < end_date:
+        print(s, e, end_date)
+        e = s + timedelta(days=6)
+        ranges.append(
+            (
+                "%s000000" % s.strftime("%Y%m%d"), 
+                "%s000000" % e.strftime("%Y%m%d")
+            )
+        )
+        s = e 
+
+    print(ranges)
+    return ranges
+
+
 # -------------------------------------------------------
 
 
@@ -178,19 +204,23 @@ class CacheItem:
 
         cached = self.load()
         if not cached:
-            time.sleep(5)
+            time.sleep(.5)
             logging.info("Requesting data for item %s from API" % self.hash)
+            logging.debug(query)
 
             res = requests.get(GDELT_URL, params=query) 
             self.query = query
             self.status_code = res.status_code
             self.raw_response = res.text
+            logging.debug(self.status_code, self.query)
             try:
                 raw_data = res.json()
                 self.data = hook(raw_data)
             except Exception as e:
                 self.error = e
                 logging.error("Loading data for %s failed: %s" % (self.hash, e))
+                logging.debug(res.status_code)
+                logging.debug(res.text)
             
             self.store()
         if cached:
@@ -246,7 +276,7 @@ class VolumeDataset:
 
     all = None
     
-    def __init__(self, store, topic, stations, start=None, end=None):
+    def __init__(self, store, topic, stations, start=None, end=None, resolution='monthly'):
         self.store = store
 
         self.topic = topic
@@ -318,19 +348,20 @@ class ClipsDataset:
     end = None
     datasets = None
 
-    def __init__(self, store, topic, stations, start=None, end=None):
+    def __init__(self, store, topic, stations, start=None, end=None, resolution='monthly'):
         self.store = store
 
         self.topic = topic
         self.stations = stations
         self.start = start
         self.end = end
+        self.resolution = resolution
 
         self.get()
 
     def get(self):
         for station in self.stations:
-            ranges = get_monthly_ranges(self.start, self.end)
+            ranges = get_monthly_ranges(self.start, self.end) if self.resolution == 'monthly' else get_weekly_ranges(self.start, self.end)
             dfs = []
             for range in ranges:
                 # Set our query
@@ -401,14 +432,27 @@ class NewsAnalysis:
             }, sort_keys=True))
         ).hexdigest()
 
+        # Log our hash value
+        logging.info("Initialized project: %s Topic: %s Stations: %s Dates: %s - %s" % (
+            self.hash, 
+            self.topic, 
+            ', '.join(self.stations),
+            self.start,
+            self.end
+        ))
+
         # Storage and init
         if store:
             self.store = store(self.hash)
         else:
             self.store = Storage(self.hash)
-        self.get()
 
     def get(self):
+        self.get_volume()
+        self.get_clips()
+
+    def get_volume(self):
+        logging.info("Getting volume dataset...")
         volume = VolumeDataset(
             self.store,
             self.topic,
@@ -417,6 +461,8 @@ class NewsAnalysis:
             self.end
         )
         self.volume = volume
+
+    def get_clips(self):
         clips = ClipsDataset(
             self.store,
             self.topic,
@@ -425,3 +471,15 @@ class NewsAnalysis:
             self.end
         )
         self.clips = clips
+
+
+
+if __name__ == "__main__":
+    # news = NewsAnalysis(
+    #     '"hurricane ian"', 
+    #     ['FOXNEWS', 'CSPAN'],
+    #     start="1/1/2022", 
+    #     end="10/1/2022"
+    # )
+    # news.get_clips()
+    get_weekly_ranges(convert_date("9/1/2022"), convert_date("9/30/2022"))
