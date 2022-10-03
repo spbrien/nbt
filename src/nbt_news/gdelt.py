@@ -457,10 +457,6 @@ class NewsAnalysis:
         else:
             self.store = Storage(self.hash, metadata=self.metadata)
 
-    def get(self):
-        self.get_volume()
-        self.get_clips()
-
     def get_volume(self):
         logging.info("Getting volume dataset...")
         volume = VolumeDataset(
@@ -481,6 +477,16 @@ class NewsAnalysis:
             self.end
         )
         self.clips = clips
+
+    def get(self):
+        self.get_volume()
+        self.get_clips()
+
+    def write(self):
+        pass
+
+    def cleanup(self):
+        pass
 
 
 
