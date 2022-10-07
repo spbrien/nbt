@@ -3,6 +3,7 @@ import json
 import logging
 
 import s3fs
+import pandas as pd
 
 
 class Storage:
@@ -82,3 +83,11 @@ class Minio:
         for item in metadata:
             with self.fs.open(item, 'r') as f:
                 yield json.load(f)
+
+    def save(self, name, df):
+        with self.fs.open('%s/%s/%s.parquet' % (self.bucket, self.hash, name), 'wb') as f:
+            df.to_parquet(f)
+
+    def load(self, name):
+        with self.fs.open('%s/%s/%s.parquet' % (self.bucket, self.hash, name), 'wb') as f:
+            return pd.read_parquet(f)

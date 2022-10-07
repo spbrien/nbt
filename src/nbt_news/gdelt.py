@@ -12,6 +12,7 @@ import pandas as pd
 from .log import logging
 from .utils import *
 from .storage import Minio
+from .nlp import pipeline
 
 
 GDELT_URL = "https://api.gdeltproject.org/api/v2/tv/tv"
@@ -256,6 +257,34 @@ class NewsAnalysis:
         else:
             self.store = Minio()
 
+    def _get_volume(self):
+        if not self.hash:
+            raise Exception("You must create a search before attempting to fetch data")
+
+        logging.info("Getting volume dataset...")
+        volume = VolumeDataset(
+            self.store,
+            self.topic,
+            self.stations,
+            self.start,
+            self.end
+        )
+        self.volume = volume
+
+    def _get_clips(self):
+        if not self.hash:
+            raise Exception("You must create a search before attempting to fetch data")
+
+        logging.info("Getting clips dataset...")
+        clips = ClipsDataset(
+            self.store,
+            self.topic,
+            self.stations,
+            self.start,
+            self.end
+        )
+        self.clips = clips
+
     def search(
             self, 
             topic, 
@@ -297,41 +326,14 @@ class NewsAnalysis:
 
         # Storage and init
         self.store.create(self.hash, metadata=self.metadata)
+        self._get_volume()
+        self._get_clips()
 
-    def get_volume(self):
-        if not self.hash:
-            raise Exception("You must create a search before attempting to fetch data")
-
-        logging.info("Getting volume dataset...")
-        volume = VolumeDataset(
-            self.store,
-            self.topic,
-            self.stations,
-            self.start,
-            self.end
-        )
-        self.volume = volume
-
-    def get_clips(self):
-        if not self.hash:
-            raise Exception("You must create a search before attempting to fetch data")
-
-        logging.info("Getting clips dataset...")
-        clips = ClipsDataset(
-            self.store,
-            self.topic,
-            self.stations,
-            self.start,
-            self.end
-        )
-        self.clips = clips
-
-    def get(self):
-        if not self.hash:
-            raise Exception("You must create a search before attempting to fetch data")
-
-        self.get_volume()
-        self.get_clips()
+    def preprocess(self):
+        for item in self.stations:
+            df = getattr(self.clips, item)
+            df = pipeline(df)
+            self.store.save(item, df)
 
     def list(self):
         metadata = list(self.store.list())
@@ -343,5 +345,4 @@ if __name__ == "__main__":
     news = NewsAnalysis()
     item = news.list()[0]
     news.search(**item)
-    news.get()
     print(news.clips.cnn)
