@@ -1,1 +1,2 @@
-from .gdelt import NewsAnalysis, Storage
+from .gdelt import NewsAnalysis
+from .storage import Storage, Minio
