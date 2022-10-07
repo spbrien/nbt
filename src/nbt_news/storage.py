@@ -42,14 +42,14 @@ class Minio:
     hash = None
     dir = None
 
-    def __init__(self, bucket=None):
+    def __init__(self):
         self.fs = s3fs.S3FileSystem(
             anon=False,
             key=os.environ.get("MINIO_ACCESS_KEY"),
             secret=os.environ.get("MINIO_SECRET_KEY"),
             client_kwargs={ "endpoint_url": "http://api.minio.cluster1.nobedtimes.com" },
         )
-        self.bucket = "news-analysis-cache" if not bucket else bucket
+        self.bucket = "news-analysis-cache" 
 
     def create(self, hash, metadata={}):
         self.dir = "%s/%s" % (self.bucket, hash)
