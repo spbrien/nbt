@@ -331,9 +331,12 @@ class NewsAnalysis:
 
     def preprocess(self):
         for item in self.stations:
+            volume = self.volume.all
             df = getattr(self.clips, item.lower())
             df = pipeline(df)
             self.store.save(item.lower(), df)
+            self.store.save('volume', volume)
+        
 
     def list(self):
         metadata = list(self.store.list())
@@ -343,6 +346,3 @@ class NewsAnalysis:
 
 if __name__ == "__main__":
     news = NewsAnalysis()
-    item = news.list()[0]
-    news.search(**item)
-    news.preprocess()
