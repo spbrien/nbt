@@ -52,7 +52,8 @@ class Minio:
         self.bucket = "news-analysis-cache" 
 
     def create(self, hash, metadata={}):
-        self.dir = "%s/%s" % (self.bucket, hash)
+        self.hash = hash
+        self.dir = "%s/%s" % (self.bucket, self.hash)
         exists = self.fs.exists(self.dir)
         if not exists:
             self.fs.makedirs(self.dir)
@@ -85,9 +86,9 @@ class Minio:
                 yield json.load(f)
 
     def save(self, name, df):
-        with self.fs.open('%s/%s/%s.parquet' % (self.bucket, self.hash, name), 'wb') as f:
+        with self.fs.open('%s/%s.parquet' % (self.dir, name), 'wb') as f:
             df.to_parquet(f)
 
     def load(self, name):
-        with self.fs.open('%s/%s/%s.parquet' % (self.bucket, self.hash, name), 'wb') as f:
+        with self.fs.open('%s/%s.parquet' % (self.dir, name), 'wb') as f:
             return pd.read_parquet(f)
