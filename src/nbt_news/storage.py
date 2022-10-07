@@ -49,26 +49,32 @@ class Minio:
             secret=os.environ.get("MINIO_SECRET_KEY"),
             client_kwargs={ "endpoint_url": "http://api.minio.cluster1.nobedtimes.com" },
         )
-        self.bucket = "news-analysis-cache" 
+        self.cache = "news-analysis-cache" 
+        self.data = "news-analysis-data" 
 
     def create(self, hash, metadata={}):
         self.hash = hash
-        self.dir = "%s/%s" % (self.bucket, self.hash)
-        exists = self.fs.exists(self.dir)
-        if not exists:
-            self.fs.makedirs(self.dir)
+        self.cache_dir = "%s/%s" % (self.cache, self.hash)
+        self.data_dir = "%s/%s" % (self.data, self.hash)
+        cache_exists = self.fs.exists(self.cache)
+        data_exists = self.fs.exists(self.data)
+        if not cache_exists:
+            self.fs.makedirs(self.cache)
 
-        with self.fs.open("%s/metadata.json" % self.dir, 'w') as f:
+        if not data_exists:
+            self.fs.makedirs(self.data)
+
+        with self.fs.open("%s/metadata.json" % self.data_dir, 'w') as f:
             json.dump(metadata, f) 
 
 
     def put(self, data):
-        item_fname = "%s/%s.json" % (self.dir, data.get('hash'))
+        item_fname = "%s/%s.json" % (self.cache_dir, data.get('hash'))
         with self.fs.open(item_fname, 'w') as f:
             json.dump(data, f)
 
     def get(self, hash):
-        item_fname = "%s/%s.json" % (self.dir, hash)
+        item_fname = "%s/%s.json" % (self.cache_dir, hash)
         exists = self.fs.exists(item_fname)
         if exists:
             with self.fs.open(item_fname, 'r') as f:
@@ -80,15 +86,15 @@ class Minio:
         return None
 
     def list(self):
-        metadata = self.fs.glob('%s/**/metadata.json' % self.bucket)
+        metadata = self.fs.glob('%s/**/metadata.json' % (self.data))
         for item in metadata:
             with self.fs.open(item, 'r') as f:
                 yield json.load(f)
 
     def save(self, name, df):
-        with self.fs.open('%s/%s.parquet' % (self.dir, name), 'wb') as f:
+        with self.fs.open('%s/%s.parquet' % (self.data_dir, name), 'wb') as f:
             df.to_parquet(f)
 
     def load(self, name):
-        with self.fs.open('%s/%s.parquet' % (self.dir, name), 'wb') as f:
+        with self.fs.open('%s/%s.parquet' % (self.data_dir, name), 'wb') as f:
             return pd.read_parquet(f)

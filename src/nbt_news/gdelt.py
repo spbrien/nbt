@@ -345,4 +345,4 @@ if __name__ == "__main__":
     news = NewsAnalysis()
     item = news.list()[0]
     news.search(**item)
-    print(news.clips.cnn)
+    news.preprocess()
