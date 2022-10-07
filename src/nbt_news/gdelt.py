@@ -331,9 +331,9 @@ class NewsAnalysis:
 
     def preprocess(self):
         for item in self.stations:
-            df = getattr(self.clips, item)
+            df = getattr(self.clips, item.lower())
             df = pipeline(df)
-            self.store.save(item, df)
+            self.store.save(item.lower(), df)
 
     def list(self):
         metadata = list(self.store.list())
