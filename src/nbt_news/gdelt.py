@@ -48,7 +48,7 @@ class CacheItem:
 
         cached = self.load()
         if not cached:
-            time.sleep(.5)
+            time.sleep(5)
             logging.info("Requesting data for item %s from API" % self.hash)
             logging.info(query)
 
