@@ -50,21 +50,21 @@ class CacheItem:
         if not cached:
             time.sleep(.5)
             logging.info("Requesting data for item %s from API" % self.hash)
-            logging.debug(query)
+            logging.info(query)
 
             res = requests.get(GDELT_URL, params=query) 
             self.query = query
             self.status_code = res.status_code
             self.raw_response = res.text
-            logging.debug(self.status_code, self.query)
             try:
                 raw_data = res.json()
                 self.data = hook(raw_data)
             except Exception as e:
                 self.error = e
                 logging.error("Loading data for %s failed: %s" % (self.hash, e))
-                logging.debug(res.status_code)
-                logging.debug(res.text)
+                logging.error(res.status_code)
+                logging.error(query)
+                logging.error(res.text)
             
             self.store()
         if cached:
