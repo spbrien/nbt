@@ -335,7 +335,7 @@ class NewsAnalysis:
         for item in self.stations:
             volume = self.volume.all
             df = getattr(self.clips, item.lower(), None)
-            if df:
+            if df != None:
                 df = pipeline(df)
                 self.store.save(item.lower(), df)
             self.store.save('volume', volume)
