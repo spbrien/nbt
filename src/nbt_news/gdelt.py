@@ -48,6 +48,7 @@ class CacheItem:
 
         cached = self.load()
         if not cached:
+            logging.info("Sleeping for 5 seconds due to rate limiting...")
             time.sleep(5)
             logging.info("Requesting data for item %s from API" % self.hash)
             logging.info(query)
