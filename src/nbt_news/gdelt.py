@@ -224,11 +224,13 @@ class ClipsDataset:
 
                 dfs.append(station_cache.df())
 
-            setattr(
-                self, 
-                station.lower(), 
-                pd.concat([df for df in dfs if df is not None])
-            )
+            to_concat = [df for df in dfs if df is not None]
+            if to_concat and len(to_concat) > 0:
+                setattr(
+                    self, 
+                    station.lower(), 
+                    pd.concat([df for df in dfs if df is not None])
+                )
 
         # Record which datasets we have stored in memory
         self.datasets = [i.lower() for i in self.stations]
@@ -332,11 +334,12 @@ class NewsAnalysis:
     def preprocess(self):
         for item in self.stations:
             volume = self.volume.all
-            df = getattr(self.clips, item.lower())
-            df = pipeline(df)
-            self.store.save(item.lower(), df)
+            df = getattr(self.clips, item.lower(), None)
+            if df:
+                df = pipeline(df)
+                self.store.save(item.lower(), df)
             self.store.save('volume', volume)
-        
+            
 
     def list(self):
         metadata = list(self.store.list())
