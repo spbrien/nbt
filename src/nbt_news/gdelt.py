@@ -333,13 +333,16 @@ class NewsAnalysis:
         self._get_clips()
 
     def preprocess(self):
+        logging.info("Saving Volume Dataset for %s" % self.hash)
+        volume = self.volume.all
+        self.store.save('volume', volume)
+
         for item in self.stations:
-            volume = self.volume.all
+            logging.info("Saving Clip Dataset for %s (%s)" % (item, self.hash))
             df = getattr(self.clips, item.lower(), None)
             if isinstance(df, pd.DataFrame):
                 df = pipeline(df)
                 self.store.save(item.lower(), df)
-            self.store.save('volume', volume)
             
 
     def list(self):
