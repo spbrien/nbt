@@ -1,14 +1,8 @@
 import re
-import os
-import hashlib
-import nltk
-import s3fs
-import pandas as pd
 import numpy as np
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from nltk.text import Text
 
 from textblob import TextBlob
 from sklearn.feature_extraction.text import CountVectorizer

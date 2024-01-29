@@ -1,17 +1,13 @@
-import os
-import sys
 import json
 import time
 import hashlib
-from datetime import datetime, date, timedelta
-from dateutil.relativedelta import relativedelta
 
 import requests
 import pandas as pd
 
 from .log import logging
 from .utils import *
-from .storage import Minio
+from .storage import Storage 
 from .nlp import pipeline
 
 
@@ -258,7 +254,7 @@ class NewsAnalysis:
         if store:
             self.store = store
         else:
-            self.store = Minio()
+            self.store = Storage()
 
     def _get_volume(self):
         if not self.hash:
@@ -296,16 +292,18 @@ class NewsAnalysis:
             end=None,
         ):
         # Base Settings
+        today = date.today()
+
         self.topic = topic
         self.stations = stations
-        self.start = convert_date(start)
-        self.end = convert_date(end)
+        self.start = convert_date(start) if start else convert_date('07/02/2009')
+        self.end = convert_date(end) if end else convert_date(today.strftime("%m/%d/%Y"))
 
         self.metadata = {
-            "topic": topic,
-            "stations": stations,
-            "start": start,
-            "end": end,
+            "topic": self.topic,
+            "stations": self.stations,
+            "start": self.start,
+            "end": self.end,
         }
         
         # Hash
